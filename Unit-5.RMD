@@ -1,0 +1,199 @@
+---
+title: "Unit-5"
+author: "Burk"
+date: "September 21, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# install.packages("stringr")
+install.packages("maps")
+install.packages("mapproj")
+
+library(stringr)
+
+
+
+#######################################
+
+
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+
+# Read csv file
+PlayersBBall <- read.csv("~/03-School/DS 6306/Unit2/PlayersBBall.csv", header = TRUE)
+
+# Omit Row with no data for height
+PlayersBBall <- PlayersBBall[-c(2143), ]
+
+# Convert height to characters
+PlayersBBall$height <- as.character(PlayersBBall$height)
+
+# Separate height to feet and inches
+PlayersBBall <- PlayersBBall %>% separate(height,into = c("Feet", "Inches"), sep = "-")
+
+# Make Feet and Inches numberic to do math
+PlayersBBall$Feet <- as.numeric(PlayersBBall$Feet)
+PlayersBBall$Inches <- as.numeric(PlayersBBall$Inches)
+
+# Calculate height based on inches and add to a new Total Inches column
+PlayersBBall <- PlayersBBall %>% mutate(TotalInches = Feet * 12 + Inches)
+
+# Remove old feet and inches columns since they are no longer needed
+PlayersBBall <- subset(PlayersBBall, , -c(Feet, Inches))
+
+# Make chart of histograms of heights for every position (color coded)
+x1 <- PlayersBBall %>% ggplot(mapping = aes(x = TotalInches, fill = position)) + geom_histogram(binwidth = 1)+
+facet_wrap(~position, scales = "free_y") 
+
+x2 <- x1 + xlab("Total Height in Inches") + 
+  ggtitle("Histogram of Heights by Position") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot(x2)
+
+##############################################################################
+
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(GGally)
+
+# Read csv file
+FIFA <- read.csv("~/03-School/DS 6306/Unit3/FIFA Players.csv", header = TRUE)
+
+# check the type of each column
+str(FIFA)
+
+# remove blank and NA values from the data frame
+FIFA <- na.omit(FIFA)
+
+# separate the data from feet/inches to total inches in height
+FIFA <- FIFA %>% separate(Height,into = c("Feet", "Inches"), sep = "'")
+FIFA$Feet <- as.numeric(FIFA$Feet)
+FIFA$Inches <- as.numeric(FIFA$Inches)
+
+# Calculate height based on inches and add to a new Total Inches column
+FIFA <- FIFA %>% mutate(TotalInches = Feet * 12 + Inches)
+FIFA <- subset(FIFA, , -c(Feet, Inches))
+
+# Convert weight data to character
+FIFA$Weight <- as.character(FIFA$Weight)
+
+# remove the lbs from the weight regardless of case
+FIFA$Weight <- str_replace(FIFA$Weight, regex("lbs",ignore_case = TRUE),"")
+
+# convert weight to a numeric value
+FIFA$Weight <- as.numeric(FIFA$Weight)
+
+# Eliminate all positions but LB and LM
+FIFA <- FIFA %>% filter(Position == "LB" | Position == "LM")
+
+# drop the un-used position levels 
+FIFA$Position <- droplevels(FIFA$Position)
+
+# Make vairous plots
+# FIFA %>% select(Position, TotalInches, Weight) %>% ggpairs(mapping = aes(color = Position),upper = list(combo=wrap("facethist", binwidth=1)),lower=list(combo=wrap("facethist", binwidth=1)))
+
+# FIFA %>% select(Position, TotalInches, Weight) %>% ggpairs(mapping = aes(color = Position),upper = list(continuous = "points"),lower = list(continuous = "smooth_loess"))
+
+FIFA %>% select(Position, TotalInches, Weight) %>% ggpairs(mapping = aes(color = Position),upper = list(continuous = "smooth_loess"),lower=list(continuous = "smooth_loess"))
+
+###################################################
+
+# make a list of boys and girls names
+boys = c("OLIVER","HARRY","GEORGE","JACK","JACOB","NOAH","CHARLIE","MUHAMMAD","THOMAS","OSCAR")
+girls = c("OLIVIA","AMELIA","EMILY","ISLA","AVA","ISABELLA","LILY","JESSICA","ELLA","MIA")
+
+# read in the 2016 year of birth data
+y2016 <- read.delim("~/03-School/DS 6306/Unit5/YOB2016.txt", header = FALSE, sep = ";")
+
+# add column names to the 2016 data
+colnames(y2016) <- c("name","gender","amount")
+
+# display a structure and summary of the 2016 data
+str(y2016)
+summary(y2016)
+
+# find the offending name and display it
+badname = str_subset(y2016$name,"yyy")
+badname
+
+# find the position of the offending name for removal
+bnposit = grep("yyy", y2016$name)
+bnposit
+
+# Remove the offending replication
+y2016 <- y2016[-c(bnposit),]
+
+
+### Part 3 ####
+
+# read in the 2015 year of birth data
+y2015 <- read.delim("~/03-School/DS 6306/Unit5/YOB2015.txt", header = FALSE, sep = ",")
+
+# add column names to the 2015 data
+colnames(y2015) <- c("name","gender","amount")
+
+# display the last 10 rows of the data
+tail(y2015, n=10)
+
+# Merge 2016 and 2015 by the name column; assign it to final
+# final <- merge(y2016,y2015, by = "name")
+
+# Merge 2016 and 2015 by the name column and ensuring the gender matches then assign to final
+final <- merge(y2016, y2015, by = c("name" = "name", "gender" = "gender"))
+
+# Add the amounts and place the Total in a new column
+final <- final %>% mutate(Total = amount.x + amount.y)
+
+# Sort the data by Total to get the 10 most popular names
+final <- final %>% arrange(-Total)
+
+# Get the 10 most popular names
+head(final$name,n=10)
+
+# sort by the highest Total in a decreasing order
+head(sort(final$Total, decreasing = TRUE), 10)
+
+# change the name to a character
+final$name <- as.character(final$name)
+
+# find the top 10 names
+top10 <- head(final$name, n=10)
+
+# top10
+
+# Get only the Female names
+final <- final[(final$gender=="F"),]
+
+# Top 10 female names
+top10f <- head(final$name, n=10)
+
+# top10f
+
+# str(final)
+
+# make a new Data frame with the top 10 
+modfinal <- head(final, n=10)
+
+# Modify the data frame to include only the name and total
+modfinal <- modfinal %>% select(name, Total)
+
+# Write the new data frame to a .CSV file named "nameData.csv"
+write.csv(modfinal, file = "~/03-School/DS 6306/Unit5/nameData.csv", row.names = FALSE)
+
+
+
+
+
+
+
+
+
